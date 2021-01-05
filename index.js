@@ -19,52 +19,34 @@ const submitHandler = (event) => {
 
   // if there are no errors
   if (!hasErrors) {
-    //create a new element
-    const parkSection = document.createElement("section");
+    const park = {
+      name: formData.get("parkName"),
+      location: formData.get("parkLocation"),
+      description: formData.get("parkDescription"),
+      established: formData.get("parkEstablished"),
+      area: formData.get("parkArea"),
+      rating: formData.get("parkRating"),
+    };
 
-    // add the park class
-    parkSection.classList.add("park");
+    parks.push(park);
 
-    // construct the HTML for this element
-    const content = `
-    <h2>${formData.get("parkName")}</h2>
-    <div class="location">${formData.get("parkLocation")}</div>
-    <div class="description">${formData.get("parkDescription")}</div>
-    <button class="rateBtn" title="Add to Favourites">&#9734;</button>
-    <div class="stats">
-      <div class="established stat">
-        <h3>Established</h3>
-        <div class="value">${formData.get("parkEstablished")}</div>
-      </div>
-      <div class="area stat">
-        <h3>Area</h3>
-        <div class="value">${formData.get("parkArea")}</div>
-      </div>
-      <div class="rating stat">
-        <h3>Rating</h3>
-        <div class="value">${formData.get("parkRating")}</div>
-      </div>
-    </div>
-    `;
-
-    // set the innerHTML
-    parkSection.innerHTML = content;
-
-    //append to the main element
-    document.querySelector("main").appendChild(parkSection);
+    render();
   }
+  
 };
 
 // function to handler favorite button clicks
 const favoriteButtonClickHandler = (event) => {
-  const park = event.target.parentNode;
-  park.style.backgroundColor = "#c8e6c9";
+  if (event.target && event.target.nodeName == "BUTTON") {
+    const park = event.target;
+    park.style.backgroundColor = "#c8e6c9";
+  }
 };
 
 // function for sorting by name
 const sortByName = (parkA, parkB) => {
-  const parkAName = parkA.querySelector("h2").innerText;
-  const parkBName = parkB.querySelector("h2").innerText;
+  const parkAName = parkA.name;
+  const parkBName = parkB.name;
   if (parkAName < parkBName) {
     return -1;
   } else if (parkAName > parkBName) {
@@ -76,63 +58,31 @@ const sortByName = (parkA, parkB) => {
 
 // function for sorting by rating
 const sortByRating = (parkA, parkB) => {
-  const parkARating = parseFloat(
-    parkA.querySelector(".rating > .value").innerText
-  );
-  const parkBRating = parseFloat(
-    parkB.querySelector(".rating > .value").innerText
-  );
-  return parkBRating - parkARating;
+  const parkARating = parkA.rating
+  const parkBRating = parkB.rating
+  if(parkARating > parkBRating) {
+    return -1
+  } else if (parkARating > parkBRating) {
+    return 1
+  } else {
+    return 0
+  }
 };
 
 // function for handling the nameSorter click
 const nameSorterClickHandler = (event) => {
   event.preventDefault();
 
-  // 1.  get the main element
-  const main = document.querySelector("main");
+  parks.sort(sortByName);
 
-  // 2. get the list of parks
-  const parksList = main.querySelectorAll(".park");
-
-  // 3. empty the main
-  main.innerHTML = "";
-
-  // 4. create an array
-  const parksArray = Array.from(parksList);
-
-  // 5. sort the array
-  parksArray.sort(sortByName);
-
-  // 6. Insert each park into the DOM
-  parksArray.forEach((park) => {
-    main.appendChild(park);
-  });
+  render();
 };
 
 // function to handle the ratingSorter click
 const ratingSorterClickHandler = (event) => {
   event.preventDefault();
-
-  // 1.  get the main element
-  const main = document.querySelector("main");
-
-  // 2. get the list of parks
-  const parksList = main.querySelectorAll(".park");
-
-  // 3. empty the main
-  main.innerHTML = "";
-
-  // 4. create an array
-  const parksArray = Array.from(parksList);
-
-  // 5. sort the array
-  parksArray.sort(sortByRating);
-
-  // 6. Insert each park into the DOM
-  parksArray.forEach((park) => {
-    main.appendChild(park);
-  });
+  parks.sort(sortByRating)
+  render();
 };
 
 // the point where all the code starts
@@ -148,21 +98,63 @@ const main = () => {
 
   // add an event listener
   ratingSorter.addEventListener("click", ratingSorterClickHandler);
+  //select all btns on main
+  const main = document.querySelector("main");
 
-  // select all the buttons for all the parks
-  const allBtns = document.querySelectorAll(".rateBtn");
-
-  // iterate the list of buttons and add an event handler to each
-  allBtns.forEach((btn) => {
-    btn.addEventListener("click", favoriteButtonClickHandler);
-  });
+// Add event handler to the main
+main.addEventListener("click", favoriteButtonClickHandler);
 
   // get the form element
   const form = document.querySelector("#parkForm");
 
   // attach the submit handler
   form.addEventListener("submit", submitHandler);
+
+  render()
 };
 
 // Add event listener for DOMContentLoaded
 window.addEventListener("DOMContentLoaded", main);
+
+const renderOnePark = (park) => {
+  // Get the individual properties of the park
+  const { name, location, description, established, area, rating } = park;
+
+  const content = `
+      <section class="park">
+        <h2>${name}</h2>
+        <div class="location">${location}</div>
+        <div class="description">${description}</div>
+        <button class="rateBtn" title="Add to Favourites">&#9734;</button>
+        <div class="stats">
+          <div class="established stat">
+            <h3>Established</h3>
+            <div class="value">${established}</div>
+          </div>
+          <div class="area stat">
+            <h3>Area</h3>
+            <div class="value">${area}</div>
+          </div>
+          <div class="rating stat">
+            <h3>Rating</h3>
+            <div class="value">${rating}</div>
+          </div>
+        </div>
+      </section>
+  `;
+  return content;
+}
+
+const render = () => {
+  // Get the parent element
+  const main = document.querySelector("main");
+
+  // Empty the parent element
+  main.innerHTML = "";
+
+  // Get the parks HTML
+  const content = parks.map(renderOnePark).join("");
+
+  // Set the `innerHTML` of parent element
+  main.innerHTML = content;
+};
